@@ -1,0 +1,20 @@
+// =========================================================================
+// MARCO DE ENTREGA 2 — MODELAGEM DO BANCO DE DADOS (PRISMA SCHEMA)
+// =========================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Entidade que representa cada avaliação de filme cadastrada no sistema
+model Avaliacao {
+  id         Int    @id @default(autoincrement())
+  filme      String
+  nota       Int
+  comentario String
+}
