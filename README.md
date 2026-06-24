@@ -21,7 +21,7 @@ movie-review-app/
 ```
 
 > Observação: o arquivo `backend/server.js` já está na **versão final** (Marco 3: CRUD com Prisma + Helmet + proteção XSS).
-> O arquivo `MARCO_1_server_mock.js` foi mantido separado apenas como referência do código inicial do Marco 1 (dados mockados em memória), para você mostrar a evolução do projeto na apresentação.
+> O arquivo `MARCO_1_server_mock.js` foi mantido separado apenas como referência do código inicial do Marco 1 (dados mockados em memória).
 
 ## Como rodar (resumo — detalhes completos no RELATORIO.md)
 
