@@ -1,0 +1,112 @@
+# Relatório de Testes — Site de Avaliação de Filmes
+
+## Alunos
+- Lara Geovana — RA: 22502104
+- Gabriel Rios — RA: 22505812
+- Camilla Valenzuela — RA: 22502503
+
+---
+
+# 1. Objetivo
+
+Este relatório documenta os testes manuais realizados na aplicação "Site de
+Avaliação de Filmes", cobrindo as funcionalidades de CRUD (Create, Read,
+Delete), validação de dados e a blindagem contra ataques XSS implementada
+no Marco 3.
+
+Os testes foram realizados com o backend rodando em
+`http://localhost:3000` e o frontend aberto diretamente no navegador.
+
+---
+
+# 2. Ambiente de Testes
+
+| Item               | Detalhe                                  |
+|---------------------|-------------------------------------------|
+| Sistema Operacional  | Windows / Linux / macOS (ambiente local) |
+| Node.js              | v18+                                     |
+| Banco de Dados        | SQLite (via Prisma ORM)                 |
+| Navegador             | Google Chrome                           |
+| Ferramentas de apoio   | DevTools (aba Network e Console)        |
+
+---
+
+# 3. Casos de Teste
+
+## 3.1 Cadastro de Avaliação (POST /api/avaliacoes)
+
+| ID    | Cenário                                              | Entrada                                                                 | Resultado Esperado                                  | Resultado Obtido | Status |
+|-------|-------------------------------------------------------|--------------------------------------------------------------------------|------------------------------------------------------|--------------------|--------|
+| CT-01 | Cadastro válido completo                              | filme: "Interestelar", nota: 5, comentario: "Obra-prima"                | Avaliação criada e exibida na lista                  | Conforme esperado  | ✅ Passou |
+| CT-02 | Campo "filme" vazio                                   | filme: "", nota: 4, comentario: "Bom filme"                             | Erro 400 — "O campo filme é obrigatório"             | Conforme esperado  | ✅ Passou |
+| CT-03 | Nota fora do intervalo permitido (0)                  | filme: "Avatar", nota: 0, comentario: "Legal"                           | Erro 400 — nota deve estar entre 1 e 5               | Conforme esperado  | ✅ Passou |
+| CT-04 | Nota fora do intervalo permitido (6)                  | filme: "Avatar", nota: 6, comentario: "Legal"                           | Erro 400 — nota deve estar entre 1 e 5               | Conforme esperado  | ✅ Passou |
+| CT-05 | Comentário vazio                                      | filme: "Duna", nota: 5, comentario: ""                                  | Erro 400 — comentário obrigatório                    | Conforme esperado  | ✅ Passou |
+| CT-06 | Nota não numérica (enviada via requisição manual)     | filme: "Duna", nota: "abc", comentario: "Top"                           | Erro 400 — nota inválida                             | Conforme esperado  | ✅ Passou |
+
+## 3.2 Listagem de Avaliações (GET /api/avaliacoes)
+
+| ID    | Cenário                                  | Resultado Esperado                                              | Resultado Obtido | Status |
+|-------|---------------------------------------------|--------------------------------------------------------------------|--------------------|--------|
+| CT-07 | Listar avaliações com banco vazio           | Retorna array vazio `[]` e mensagem "Nenhuma avaliação cadastrada" | Conforme esperado  | ✅ Passou |
+| CT-08 | Listar avaliações com registros existentes  | Retorna array com objetos contendo id, filme, nota e comentario   | Conforme esperado  | ✅ Passou |
+| CT-09 | Ordem de exibição                           | Avaliações mais recentes aparecem primeiro (orderBy id desc)      | Conforme esperado  | ✅ Passou |
+
+## 3.3 Exclusão de Avaliação (DELETE /api/avaliacoes/:id)
+
+| ID    | Cenário                                       | Resultado Esperado                                | Resultado Obtido | Status |
+|-------|--------------------------------------------------|------------------------------------------------------|--------------------|--------|
+| CT-10 | Excluir avaliação existente                      | Status 204, avaliação removida da lista e do banco  | Conforme esperado  | ✅ Passou |
+| CT-11 | Excluir avaliação com ID inexistente              | Status 404 — "Avaliação não encontrada"             | Conforme esperado  | ✅ Passou |
+| CT-12 | Excluir avaliação com ID inválido (texto, ex: "abc") | Status 400 — "ID inválido"                        | Conforme esperado  | ✅ Passou |
+| CT-13 | Cancelar exclusão no `confirm()` do navegador      | Nenhuma requisição é enviada, item permanece na lista | Conforme esperado | ✅ Passou |
+
+## 3.4 Segurança contra XSS
+
+| ID    | Cenário                                                                   | Entrada                                                          | Resultado Esperado                                                                 | Resultado Obtido | Status |
+|-------|------------------------------------------------------------------------------|---------------------------------------------------------------------|----------------------------------------------------------------------------------------|--------------------|--------|
+| CT-14 | Injeção de script no campo "Nome do Filme"                                  | `<script>alert('hack')</script>`                                    | O texto é salvo e exibido literalmente na tela, sem execução do script                | Conforme esperado  | ✅ Passou |
+| CT-15 | Injeção de script no campo "Crítica/Resenha"                                 | `<img src="x" onerror="alert('hack')">`                             | O texto aparece como string pura no card, sem disparar nenhum alerta                  | Conforme esperado  | ✅ Passou |
+| CT-16 | Verificação de uso de `innerHTML` no código-fonte do frontend                | Inspeção manual do arquivo `script.js`                              | Nenhuma ocorrência de `innerHTML` para dados do usuário; apenas `textContent`         | Conforme esperado  | ✅ Passou |
+| CT-17 | Verificação dos cabeçalhos HTTP de segurança (Helmet)                        | Inspeção da aba Network do DevTools nas respostas da API            | Cabeçalhos como `X-Content-Type-Options` e `X-Frame-Options` presentes na resposta    | Conforme esperado  | ✅ Passou |
+
+## 3.5 Persistência de Dados
+
+| ID    | Cenário                                                  | Resultado Esperado                                              | Resultado Obtido | Status |
+|-------|--------------------------------------------------------------|----------------------------------------------------------------------|--------------------|--------|
+| CT-18 | Reiniciar o servidor (node server.js) após cadastrar dados     | Os dados continuam disponíveis após o reinício (persistência real) | Conforme esperado  | ✅ Passou |
+| CT-19 | Verificar dados diretamente no arquivo `dev.db` (SQLite)        | Registros encontrados correspondem aos exibidos na interface       | Conforme esperado  | ✅ Passou |
+
+---
+
+# 4. Resumo dos Resultados
+
+| Categoria                 | Total de Casos | Passou | Falhou |
+|------------------------------|------------------|--------|--------|
+| Cadastro (POST)               | 6                | 6      | 0      |
+| Listagem (GET)                 | 3                | 3      | 0      |
+| Exclusão (DELETE)               | 4                | 4      | 0      |
+| Segurança (XSS / Helmet)         | 4                | 4      | 0      |
+| Persistência                      | 2                | 2      | 0      |
+| **Total**                          | **19**           | **19** | **0**  |
+
+---
+
+# 5. Conclusão
+
+Todos os 19 casos de teste planejados foram executados com sucesso,
+confirmando que:
+
+- As rotas de CRUD (criar, listar e excluir avaliações) funcionam
+  corretamente e respeitam as validações de entrada definidas no backend.
+- Os dados persistem corretamente no banco SQLite mesmo após o reinício
+  do servidor, validando a integração com o Prisma ORM.
+- A aplicação está protegida contra ataques de XSS, já que qualquer
+  tentativa de injeção de script nos campos de "Nome do Filme" e
+  "Crítica/Resenha" é exibida como texto puro, sem execução, graças ao
+  uso exclusivo de `textContent` no frontend.
+- O middleware `helmet` está corretamente configurado no backend,
+  adicionando uma camada extra de proteção via cabeçalhos HTTP.
+
+Não foram identificadas falhas ou comportamentos inesperados durante a
+execução dos testes. O sistema está apto para a entrega final.
