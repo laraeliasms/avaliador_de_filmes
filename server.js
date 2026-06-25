@@ -25,10 +25,12 @@ app.use(helmet());
 // Middleware nativo do Express para interpretar JSON no corpo das requisições
 app.use(express.json());
 
-// (Opcional) Servir o frontend estático diretamente pelo backend.
-// Descomente a linha abaixo se quiser que o Express sirva os arquivos
-// da pasta frontend em vez de abri-los manualmente no navegador.
-// app.use(express.static('../frontend'));
+// Serve os arquivos estáticos do frontend (index.html, script.js) pela
+// mesma origem do backend. Isso é necessário porque o frontend agora usa
+// caminhos relativos ("/api/avaliacoes") em vez de "http://localhost:3000",
+// para funcionar igual tanto localmente quanto em produção na Vercel.
+const path = require('path');
+app.use(express.static(path.join(__dirname, '..', 'frontend')));
 
 // -------------------------------------------------------------------------
 // MARCO 2 — ROTA GET: lista todas as avaliações reais salvas no SQLite
@@ -107,6 +109,22 @@ app.delete('/api/avaliacoes/:id', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Servidor rodando em http://localhost:${PORT}`);
-});
+// -------------------------------------------------------------------------
+// CORREÇÃO PARA DEPLOY NA VERCEL (erro FUNCTION_INVOCATION_FAILED)
+//
+// A Vercel não executa "app.listen()" — ela importa o módulo e espera
+// que ele exporte um handler (a própria instância do Express já funciona
+// como handler, pois é compatível com a assinatura (req, res) do Node).
+//
+// Por isso, exportamos o `app` no final do arquivo. O `app.listen()`
+// só é chamado quando o arquivo é executado DIRETAMENTE (node server.js),
+// ou seja, em ambiente local/desenvolvimento — nunca na Vercel.
+// -------------------------------------------------------------------------
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Servidor rodando em http://localhost:${PORT}`);
+  });
+}
+
+module.exports = app;
+
